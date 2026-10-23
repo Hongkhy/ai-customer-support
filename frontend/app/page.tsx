@@ -85,7 +85,10 @@ export default function Home() {
 
       const newConversation: Conversation = {
         id: conversationId,
-        title: content.slice(0, 35),
+        title:
+          content.length > 35
+            ? `${content.slice(0, 35).trim()}...`
+            : content,
         messages: [],
         createdAt: new Date(),
       };

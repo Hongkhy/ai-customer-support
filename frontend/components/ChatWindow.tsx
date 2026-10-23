@@ -21,14 +21,12 @@ export default function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-white">
-      {/* Header */}
+      {/* Chat header */}
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-gray-200 px-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
           <Bot size={22} />
@@ -44,10 +42,10 @@ export default function ChatWindow({
         </div>
       </header>
 
-      {/* Messages */}
+      {/* Message area */}
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center">
+          <div className="flex min-h-full flex-col items-center justify-center px-4 py-8 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-700">
               <Bot size={32} />
             </div>
@@ -57,9 +55,28 @@ export default function ChatWindow({
             </h2>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-gray-500">
-              Ask a question about our products, services, or account
-              support. Our AI assistant is here to help.
+              Choose a question below or type your own message to get started.
             </p>
+
+            {/* Suggested questions */}
+            <div className="mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                "How do I reset my password?",
+                "How can I contact customer support?",
+                "Where can I check my order status?",
+                "How do I request a refund?",
+              ].map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => onSendMessage(question)}
+                  disabled={isLoading}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left text-sm text-gray-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -67,13 +84,22 @@ export default function ChatWindow({
               <MessageBubble key={message.id} message={message} />
             ))}
 
+            {/* Animated typing indicator */}
             {isLoading && (
               <div
                 role="status"
                 aria-label="Assistant is responding"
-                className="text-sm text-gray-500"
+                className="flex items-center gap-3 self-start"
               >
-                Assistant is typing...
+                <div className="flex items-center gap-1 rounded-2xl bg-gray-100 px-4 py-3">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </div>
+
+                <span className="text-xs text-gray-500">
+                  AI is responding...
+                </span>
               </div>
             )}
 
@@ -82,16 +108,12 @@ export default function ChatWindow({
         )}
       </div>
 
-      {/* Input */}
+      {/* Message input */}
       <footer className="shrink-0 border-t border-gray-100 px-4 py-4 sm:px-8">
-        <ChatInput
-          onSend={onSendMessage}
-          disabled={isLoading}
-        />
+        <ChatInput onSend={onSendMessage} disabled={isLoading} />
 
         <p className="mt-2 text-center text-xs text-gray-400">
-          AI responses can be inaccurate. Avoid sharing passwords or
-          sensitive information.
+          AI responses can be inaccurate. Avoid sharing passwords or sensitive information.
         </p>
       </footer>
     </section>
