@@ -5,6 +5,8 @@ import { Menu } from "lucide-react";
 import type { Conversation, Message } from "../types/chat";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
+import { sendChatMessage } from "../lib/api";
+
 
 export default function Home() {
   const STORAGE_KEY = "ai-customer-support-conversations";
@@ -76,28 +78,29 @@ export default function Home() {
     }
   }
 
-  function handleSendMessage(content: string) {
+  async function handleSendMessage(content: string) {
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent || isLoading) {
+      return;
+    }
+
     let conversationId = activeConversationId;
 
-    // Create a conversation when the first message is sent.
     if (!conversationId) {
       conversationId = crypto.randomUUID();
 
       const newConversation: Conversation = {
         id: conversationId,
         title:
-          content.length > 35
-            ? `${content.slice(0, 35).trim()}...`
-            : content,
+          trimmedContent.length > 35
+            ? `${trimmedContent.slice(0, 35).trim()}...`
+            : trimmedContent,
         messages: [],
         createdAt: new Date(),
       };
 
-      setConversations((previous) => [
-        newConversation,
-        ...previous,
-      ]);
-
+      setConversations((previous) => [newConversation, ...previous]);
       setActiveConversationId(conversationId);
     }
 
@@ -106,7 +109,7 @@ export default function Home() {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content,
+      content: trimmedContent,
       createdAt: new Date(),
     };
 
@@ -123,13 +126,13 @@ export default function Home() {
 
     setIsLoading(true);
 
-    // Temporary demo response. We'll connect the real AI API later.
-    setTimeout(() => {
+    try {
+      const reply = await sendChatMessage(trimmedContent);
+
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content:
-          "Thanks for contacting support! This is a temporary demo response. We'll connect the real AI assistant later.",
+        content: reply,
         createdAt: new Date(),
       };
 
@@ -143,9 +146,30 @@ export default function Home() {
             : conversation
         )
       );
+    } catch (error) {
+      console.error("Failed to send chat message:", error);
 
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "Sorry, I couldn't connect to the support server. Please check your connection and try again.",
+        createdAt: new Date(),
+      };
+
+      setConversations((previous) =>
+        previous.map((conversation) =>
+          conversation.id === currentId
+            ? {
+                ...conversation,
+                messages: [...conversation.messages, errorMessage],
+              }
+            : conversation
+        )
+      );
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   }
 
   return (
